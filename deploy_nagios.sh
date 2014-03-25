@@ -101,7 +101,7 @@ function services_gen() {
         echo "command[$SERVICE]=$SERVICE_NRPE_COMMAND" >> $DIR_NRPE_OUT/$2.cfg
     fi
 
-    IS_SERVICE=$(cat $DIR_OUT/$SERVICES_FILE | grep "# $SERVICE")
+    IS_SERVICE=$(cat $DIR_OUT/$SERVICES_FILE | grep "^# $SERVICE$")
     if [ ! $? -eq 0 ];then
 
 cat >> $DIR_OUT/$SERVICES_FILE <<EOF
@@ -155,7 +155,7 @@ function services_gen_from_group() {
           echo "command[$SERVICE]=$SERVICE_NRPE_COMMAND" >> $DIR_NRPE_OUT/$2.cfg
       fi
 
-      IS_SERVICE=$(cat $DIR_OUT/$SERVICES_FILE | grep "# $SERVICE")
+      IS_SERVICE=$(cat $DIR_OUT/$SERVICES_FILE | grep "^# $SERVICE$")
       if [ ! $? -eq 0 ];then
 
 cat >> $DIR_OUT/$SERVICES_FILE <<EOF
@@ -174,7 +174,7 @@ EOF
 
       else
         # find line to change
-        LINE=$(cat $DIR_OUT/$SERVICES_FILE | grep -ni "# $SERVICE" | cut -d : -f 1)
+        LINE=$(cat $DIR_OUT/$SERVICES_FILE | grep -ni "^# $SERVICE$" | cut -d : -f 1)
         LINE=`expr $LINE + 3`
         [ $? -eq 0 ] || exit 1
         sed -i -e ''$LINE's/$/,'$2'/' $DIR_OUT/$SERVICES_FILE
@@ -210,7 +210,7 @@ function servicegroup_gen() {
 
     [ $IS_OUR_SERVICE -eq 0 ] && continue
 
-    IS_SERVICE=$(cat $DIR_OUT/$SERVICE_GROUP_FILE | grep "# $MY_SERVICE_GROUP")
+    IS_SERVICE=$(cat $DIR_OUT/$SERVICE_GROUP_FILE | grep "^# $MY_SERVICE_GROUP$")
     if [ ! $? -eq 0 ];then
 
 cat >> $DIR_OUT/$SERVICE_GROUP_FILE <<EOF
@@ -224,7 +224,7 @@ define servicegroup {
 EOF
     else
 
-      LINE=$(cat $DIR_OUT/$SERVICE_GROUP_FILE | grep -ni "# $MY_SERVICE_GROUP" | cut -d : -f 1)
+      LINE=$(cat $DIR_OUT/$SERVICE_GROUP_FILE | grep -ni "^# $MY_SERVICE_GROUP$" | cut -d : -f 1)
       LINE=`expr $LINE + 4`
       sed -i -e ''$LINE's/$/,'"$2,$SERVICE_DESCRIPTION"'/' $DIR_OUT/$SERVICE_GROUP_FILE
     fi
