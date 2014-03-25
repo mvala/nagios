@@ -92,7 +92,7 @@ function services_gen() {
     local SERVICE=$(echo $line | cut -d : -f 1)
     local SERVICE_DESCRIPTION=$(echo $line | cut -d : -f 2)
     local SERVICE_COMMAND=$(echo $line | cut -d : -f 3)
-    local SERVICE_NRPE_COMMAND=$(echo $line | cut -d : -f 4)
+    local SERVICE_NRPE_COMMAND=$(echo $line | cut -d : -f 4,5,6)
 
     [ "$1" != "$SERVICE" ] && continue
 
@@ -146,7 +146,7 @@ function services_gen_from_group() {
       local SERVICE=$(echo $line | cut -d : -f 1)
       local SERVICE_DESCRIPTION=$(echo $line | cut -d : -f 2)
       local SERVICE_COMMAND=$(echo $line | cut -d : -f 3)
-      local SERVICE_NRPE_COMMAND=$(echo $line | cut -d : -f 4)
+      local SERVICE_NRPE_COMMAND=$(echo $line | cut -d : -f 4,5,6)
 
       [ "$line_servgr" != "$SERVICE" ] && continue
 
