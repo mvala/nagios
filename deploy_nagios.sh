@@ -348,7 +348,6 @@ while read line; do
   done
 
   for service in $MYSERVICES_EXTRA;do
-  echo $service
     services_gen "$service" $MYHOST
   done
 
