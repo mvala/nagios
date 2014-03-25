@@ -77,6 +77,7 @@ EOF
     # find line to change
     LINE=$(cat $DIR_OUT/$HOST_GROUP_FILE | grep -ni "hostgroup_name" | grep $1 | cut -d : -f 1)
     LINE=`expr $LINE + 2`
+    [ $? -eq 0 ] || exit 1
     sed -i -e ''$LINE's/$/,'$2'/' $DIR_OUT/$HOST_GROUP_FILE
   fi
 }
@@ -130,6 +131,7 @@ EOF
         # find line to change
         LINE=$(cat $DIR_OUT/$SERVICES_FILE | grep -ni "# $SERVICE" | cut -d : -f 1)
         LINE=`expr $LINE + 3`
+        [ $? -eq 0 ] || exit 1
         sed -i -e ''$LINE's/$/,'$2'/' $DIR_OUT/$SERVICES_FILE
       fi
 
@@ -188,8 +190,10 @@ EOF
 
 function deploy() {
 
-DEPLOY_NAGIOS_SERVER=$(head -n 1 $FILE_CLUSTER_IN)
-DEPLOY_NAGIOS_NRPE_DIR=$(tail -n +2 $FILE_CLUSTER_IN | head -n 1)
+#DEPLOY_NAGIOS_SERVER=$(head -n 1 $FILE_CLUSTER_IN)
+#echo "$(tail -n +2 $FILE_CLUSTER_IN | head -n 1)"
+DEPLOY_NAGIOS_SERVER=$(cat $FILE_CLUSTER_IN | grep DEPLOY_NAGIOS_SERVER)
+DEPLOY_NAGIOS_NRPE_DIR=$(cat $FILE_CLUSTER_IN | grep DEPLOY_NAGIOS_NRPE_DIR)
 
 DEPLOY_NAGIOS_SERVER=${DEPLOY_NAGIOS_SERVER//# DEPLOY_NAGIOS_SERVER=/}
 DEPLOY_NAGIOS_NRPE_DIR=${DEPLOY_NAGIOS_NRPE_DIR//# DEPLOY_NAGIOS_NRPE_DIR=/}

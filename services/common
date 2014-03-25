@@ -7,5 +7,3 @@ check_uptime
 check_ssh
 check_ping
 check_swap
-check_disk_sda1
-#check_disk_sda2

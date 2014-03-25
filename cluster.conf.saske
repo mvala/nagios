@@ -1,7 +1,8 @@
 # DEPLOY_NAGIOS_SERVER="wiki.saske.sk:/etc/nagios"
 # DEPLOY_NAGIOS_NRPE_DIR="/etc/nrpe.d"
 
-lx000.saske.sk:all_nodes:common,home
-kdc1.saske.sk:all_nodes:common
-fb-iep-grid.saske.sk:all_nodes:common,home,web
-eos-head2-iep-grid.saske.sk:all_nodes:common
+lx000.saske.sk:all_nodes:common,disk_sda_root,disk_sda_home
+kdc1.saske.sk:all_nodes:common,disk_sda_root
+fb-iep-grid.saske.sk:all_nodes:common,disk_sda_root,web
+eos-head2-iep-grid.saske.sk:all_nodes:common,disk_sda_root
+wiki.saske.sk:all_nodes:common,wiki,disk_md_root
