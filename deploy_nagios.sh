@@ -84,6 +84,51 @@ EOF
 
 function services_gen() {
 
+  while read line; do
+    [ -z "$line" ] && continue
+    [ "${line:0:1}" = "#" ] && continue
+
+
+    local SERVICE=$(echo $line | cut -d : -f 1)
+    local SERVICE_DESCRIPTION=$(echo $line | cut -d : -f 2)
+    local SERVICE_COMMAND=$(echo $line | cut -d : -f 3)
+    local SERVICE_NRPE_COMMAND=$(echo $line | cut -d : -f 4)
+
+    [ "$1" != "$SERVICE" ] && continue
+
+    IS_CHECK_NRPE=$(echo $SERVICE_COMMAND | grep "check_nrpe!$SERVICE")
+    if [ $? -eq 0 ];then
+        echo "command[$SERVICE]=$SERVICE_NRPE_COMMAND" >> $DIR_NRPE_OUT/$2.cfg
+    fi
+
+    IS_SERVICE=$(cat $DIR_OUT/$SERVICES_FILE | grep "# $SERVICE")
+    if [ ! $? -eq 0 ];then
+
+cat >> $DIR_OUT/$SERVICES_FILE <<EOF
+# $SERVICE
+define service {
+        use                             local-service
+        host_name                       $2
+        service_description             $SERVICE_DESCRIPTION
+        check_command                   $SERVICE_COMMAND
+        }
+
+EOF
+
+   else
+      # find line to change
+      LINE=$(cat $DIR_OUT/$SERVICES_FILE | grep -ni "# $SERVICE" | cut -d : -f 1)
+      LINE=`expr $LINE + 3`
+      [ $? -eq 0 ] || exit 1
+      sed -i -e ''$LINE's/$/,'$2'/' $DIR_OUT/$SERVICES_FILE
+    fi
+  done < $FILE_SERVICES_IN
+
+
+}
+
+function services_gen_from_group() {
+
   if [ ! -f $SERVICES_IN_DIR/$1 ];then
     echo "SERVICE $1 was not found in $SERVICES_IN_DIR/$1 !!!"
     exit 1
@@ -290,14 +335,21 @@ while read line; do
   MYGROUPS=$(echo ${MYGROUPS//,/ })
   MYSERVICES=$(echo $line | cut -d: -f 3)
   MYSERVICES=$(echo ${MYSERVICES//,/ })
+  MYSERVICES_EXTRA=$(echo $line | cut -d: -f 4)
+  MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
 
   hosts_gen $MYHOST
   for gr in $MYGROUPS;do
     hostsgroup_gen $gr $MYHOST
   done
   for service in $MYSERVICES;do
-    services_gen "$service" $MYHOST
+    services_gen_from_group "$service" $MYHOST
     servicegroup_gen "$service" $MYHOST
+  done
+
+  for service in $MYSERVICES_EXTRA;do
+  echo $service
+    services_gen "$service" $MYHOST
   done
 
 done < $FILE_CLUSTER_IN
