@@ -1,7 +1,5 @@
 check_users
 check_load
-check_total_procs
-check_zombie_procs
 #check_mem
 check_uptime
 check_ssh
