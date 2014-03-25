@@ -117,7 +117,7 @@ EOF
 
    else
       # find line to change
-      LINE=$(cat $DIR_OUT/$SERVICES_FILE | grep -ni "# $SERVICE" | cut -d : -f 1)
+      LINE=$(cat $DIR_OUT/$SERVICES_FILE | grep -ni "^# $SERVICE$" | cut -d : -f 1)
       LINE=`expr $LINE + 3`
       [ $? -eq 0 ] || exit 1
       sed -i -e ''$LINE's/$/,'$2'/' $DIR_OUT/$SERVICES_FILE
