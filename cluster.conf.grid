@@ -1,0 +1,4 @@
+# DEPLOY_NAGIOS_SERVER="gridmon-iep-grid.saske.sk:/etc/nagios"
+# DEPLOY_NAGIOS_NRPE_DIR="/etc/nrpe.d"
+
+n54-iep-grid.saske.sk:wn:common:check_disk_sda1
