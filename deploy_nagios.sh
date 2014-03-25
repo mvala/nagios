@@ -25,6 +25,21 @@ function help() {
   echo
 }
 
+function check_prog() {
+  echo -n "Chekcing $1 "
+  IS_PROG=$(which $1)
+  if [ ! $? -eq 0 ];then
+    exit 1
+  fi
+  echo " [FOUND]"
+}
+
+function check() {
+  check_prog scp
+  check_prog ssh
+  check_prog pssh
+}
+
 function hosts_gen() {
 
   local MYHOST=$1
@@ -58,7 +73,6 @@ define hostgroup {
         }
 
 EOF
-
   else
     # find line to change
     LINE=$(cat $DIR_OUT/$HOST_GROUP_FILE | grep -ni "hostgroup_name" | grep $1 | cut -d : -f 1)
@@ -83,21 +97,20 @@ function services_gen() {
       [ "${line:0:1}" = "#" ] && continue
 
 
-    local SERVICE=$(echo $line | cut -d : -f 1)
-    local SERVICE_DESCRIPTION=$(echo $line | cut -d : -f 2)
-    local SERVICE_COMMAND=$(echo $line | cut -d : -f 3)
-    local SERVICE_NRPE_COMMAND=$(echo $line | cut -d : -f 4)
+      local SERVICE=$(echo $line | cut -d : -f 1)
+      local SERVICE_DESCRIPTION=$(echo $line | cut -d : -f 2)
+      local SERVICE_COMMAND=$(echo $line | cut -d : -f 3)
+      local SERVICE_NRPE_COMMAND=$(echo $line | cut -d : -f 4)
 
-    [ "$line_servgr" != "$SERVICE" ] && continue
+      [ "$line_servgr" != "$SERVICE" ] && continue
 
-    IS_CHECK_NRPE=$(echo $SERVICE_COMMAND | grep "check_nrpe!$SERVICE")
-    if [ $? -eq 0 ];then
-        echo "command[$SERVICE]=$SERVICE_NRPE_COMMAND" >> $DIR_NRPE_OUT/$2.cfg
-    fi
+      IS_CHECK_NRPE=$(echo $SERVICE_COMMAND | grep "check_nrpe!$SERVICE")
+      if [ $? -eq 0 ];then
+          echo "command[$SERVICE]=$SERVICE_NRPE_COMMAND" >> $DIR_NRPE_OUT/$2.cfg
+      fi
 
-#    cat $DIR_OUT/$SERVICES_FILE | grep "# $SERVICE"
-    IS_SERVICE=$(cat $DIR_OUT/$SERVICES_FILE | grep "# $SERVICE")
-  if [ ! $? -eq 0 ];then
+      IS_SERVICE=$(cat $DIR_OUT/$SERVICES_FILE | grep "# $SERVICE")
+      if [ ! $? -eq 0 ];then
 
 cat >> $DIR_OUT/$SERVICES_FILE <<EOF
 # $SERVICE
@@ -113,16 +126,15 @@ EOF
 # cat $DIR_OUT/$SERVICES_FILE | grep "# $SERVICE"
 # exit 1
 
-  else
-    # find line to change
-    LINE=$(cat $DIR_OUT/$SERVICES_FILE | grep -ni "# $SERVICE" | cut -d : -f 1)
-    LINE=`expr $LINE + 3`
-    sed -i -e ''$LINE's/$/,'$2'/' $DIR_OUT/$SERVICES_FILE
-  fi
+      else
+        # find line to change
+        LINE=$(cat $DIR_OUT/$SERVICES_FILE | grep -ni "# $SERVICE" | cut -d : -f 1)
+        LINE=`expr $LINE + 3`
+        sed -i -e ''$LINE's/$/,'$2'/' $DIR_OUT/$SERVICES_FILE
+      fi
 
     done < $FILE_SERVICES_IN
-
-done < $SERVICES_IN_DIR/$1
+  done < $SERVICES_IN_DIR/$1
 
 }
 
@@ -186,18 +198,36 @@ read MY_INPUT
 #DEPLOY_NAGIOS_SERVER="wiki.saske.sk:/etc/nagios"
 #DEPLOY_NAGIOS_NRPE_DIR="/etc/nagios/nrpe.d"
 
+# checking if we can connect
+echo -n "Checking ssh to root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1)"
+ssh root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1) echo -n
+[ $? -eq 0 ] || exit 10
+echo " [OK]"
+MY_PSSH_HOSTS=""
+for f in $(ls $DIR_NRPE_OUT);do
+  MY_PSSH_HOSTS="root@${f//.cfg/} $MY_PSSH_HOSTS"
+done
+echo "Checking ssh to all nrpe servers "
+pssh -H "$MY_PSSH_HOSTS" echo -n
+[ $? -eq 0 ] || exit 11
+echo "Checking ssh to all nrpe servers [OK]"
+
+
 echo "Copying all config files for nagios server ..."
 echo "scp etc/objects/* root@$DEPLOY_NAGIOS_SERVER/objects/"
 scp etc/objects/* root@$DEPLOY_NAGIOS_SERVER/objects/
 ssh root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1) service nagios restart
 
-echo "Copying nrpe configs for all hosts"
+echo "Copying nrpe configs for all hosts ..."
 for f in $(ls $DIR_NRPE_OUT);do
   echo "scp $DIR_NRPE_OUT/$f root@${f//.cfg/}:$DEPLOY_NAGIOS_NRPE_DIR/"
   scp $DIR_NRPE_OUT/$f root@${f//.cfg/}:$DEPLOY_NAGIOS_NRPE_DIR/
-  ssh root@${f//.cfg/} service nrpe restart
 done
 
+echo "Restarting nrpe on all nrpe hosts ..."
+pssh -H "$MY_PSSH_HOSTS" service nrpe restart
+[ $? -eq 0 ] || exit 12
+echo "Restarting nrpe on all nrpe hosts [OK]"
 
 }
 
@@ -212,6 +242,8 @@ if [ ! -f "$FILE_CLUSTER_IN" ];then
   help
   exit 1
 fi
+
+check
 
 [ -d $DIR_OUT ] || mkdir -p $DIR_OUT
 rm -rf $DIR_NRPE_OUT
@@ -247,17 +279,7 @@ while read line; do
   done
   for service in $MYSERVICES;do
     services_gen "$service" $MYHOST
-
-#    IS_SERV_GROUP=0
-#    for sg in $MY_TMP_SERV_GROUP;do
-#      if [ "$sg" = "$service" ];then
-#        IS_SERV_GROUP=1
-#      fi
-#    done
-#    if [ $IS_SERV_GROUP -eq 0 ];then
-      servicegroup_gen "$service" $MYHOST
-#      MY_TMP_SERV_GROUP="$service $MY_TMP_SERV_GROUP"
-#    fi
+    servicegroup_gen "$service" $MYHOST
   done
 
 done < $FILE_CLUSTER_IN
