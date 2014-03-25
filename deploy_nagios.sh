@@ -188,15 +188,29 @@ EOF
 
 function deploy() {
 
+DEPLOY_NAGIOS_SERVER=$(head -n 1 $FILE_CLUSTER_IN)
+DEPLOY_NAGIOS_NRPE_DIR=$(tail -n +2 $FILE_CLUSTER_IN | head -n 1)
 
-echo -n "Enter nagios server:path (default $DEPLOY_NAGIOS_SERVER)"
+DEPLOY_NAGIOS_SERVER=${DEPLOY_NAGIOS_SERVER//# DEPLOY_NAGIOS_SERVER=/}
+DEPLOY_NAGIOS_NRPE_DIR=${DEPLOY_NAGIOS_NRPE_DIR//# DEPLOY_NAGIOS_NRPE_DIR=/}
+DEPLOY_NAGIOS_SERVER=${DEPLOY_NAGIOS_SERVER//\"/}
+DEPLOY_NAGIOS_NRPE_DIR=${DEPLOY_NAGIOS_NRPE_DIR//\"/}
+
+if [ -z "$DEPLOY_NAGIOS_SERVER" -o -z "$DEPLOY_NAGIOS_NRPE_DIR" ];then
+  echo
+  echo -n "Enter nagios server:path (default $DEPLOY_NAGIOS_SERVER)"
+  read MY_INPUT
+  [ -n "$MY_INPUT" ] && DEPLOY_NAGIOS_SERVER=$MY_INPUT
+  echo -n "Enter nrpe path for hosts (default $DEPLOY_NAGIOS_NRPE_DIR)"
+  read MY_INPUT
+  [ -n "$MY_INPUT" ] && DEPLOY_NAGIOS_NRPE_DIR=$MY_INPUT
+fi
+echo ""
+echo "DEPLOY_NAGIOS_SERVER=$DEPLOY_NAGIOS_SERVER"
+echo "DEPLOY_NAGIOS_NRPE_DIR=$DEPLOY_NAGIOS_NRPE_DIR"
+echo ""
+echo -n "Do you want to deploy ? (for deploy press [ENTER] or CTRL-C to cancel)"
 read MY_INPUT
-[ -n "$MY_INPUT" ] && DEPLOY_NAGIOS_SERVER=$MY_INPUT
-echo -n "Enter nrpe path for hosts (default $DEPLOY_NAGIOS_NRPE_DIR)"
-read MY_INPUT
-[ -n "$MY_INPUT" ] && DEPLOY_NAGIOS_NRPE_DIR=$MY_INPUT
-#DEPLOY_NAGIOS_SERVER="wiki.saske.sk:/etc/nagios"
-#DEPLOY_NAGIOS_NRPE_DIR="/etc/nagios/nrpe.d"
 
 # checking if we can connect
 echo -n "Checking ssh to root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1)"
