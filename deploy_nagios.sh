@@ -53,10 +53,11 @@ function hosts_gen() {
 
 cat >> $DIR_OUT/$HOSTS_FILE <<EOF
 define host {
-    use        linux-server
-    host_name  $MYHOST
-    alias      $MYHOST_SHORT
-    address    $MYHOST_IP
+    use            linux-server
+    host_name      $MYHOST
+    alias          $MYHOST_SHORT
+    address        $MYHOST_IP
+    contact_groups admins
 }
 
 EOF
