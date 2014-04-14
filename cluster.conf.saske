@@ -4,5 +4,6 @@
 lx000.saske.sk:all_nodes:common,common_extra:check_disk_sda1,check_disk_sda3
 kdc1.saske.sk:all_nodes:common,common_extra:check_disk_sda1
 fb-iep-grid.saske.sk:all_nodes:common,common_extra,web:check_disk_sda1
+eos-head-iep-grid.saske.sk:all_nodes:common,common_extra:check_disk_sda1
 eos-head2-iep-grid.saske.sk:all_nodes:common,common_extra:check_disk_sda1
 wiki.saske.sk:all_nodes:common,common_extra,webpages:check_disk_md126
