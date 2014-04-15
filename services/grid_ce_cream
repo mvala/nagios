@@ -1,0 +1,5 @@
+check_pbsserver
+check_maui
+check_grid_cores
+check_bdii_status
+check_mysqld_status

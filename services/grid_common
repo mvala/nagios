@@ -1,0 +1,8 @@
+#check_kernel
+#check_apcups_bcharge
+#check_apcups_itemp
+#check_apcups_loadpct
+#check_apcups_status
+check_smartmon_sda
+check_smartmon_sdb
+check_temp

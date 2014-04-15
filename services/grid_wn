@@ -1,0 +1,5 @@
+check_pbsmom
+check_munge
+check_lcg-CA
+check_cvmfs_atlas
+check_cvmfs_alice
