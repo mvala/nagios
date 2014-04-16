@@ -89,7 +89,6 @@ function services_gen() {
     [ -z "$line" ] && continue
     [ "${line:0:1}" = "#" ] && continue
 
-
     local SERVICE=$(echo $line | cut -d : -f 1)
     local SERVICE_DESCRIPTION=$(echo $line | cut -d : -f 2)
     local SERVICE_COMMAND=$(echo $line | cut -d : -f 3)
@@ -125,7 +124,6 @@ EOF
     fi
   done < $FILE_SERVICES_IN
 
-
 }
 
 function services_gen_from_group() {
@@ -142,7 +140,6 @@ function services_gen_from_group() {
     while read line; do
       [ -z "$line" ] && continue
       [ "${line:0:1}" = "#" ] && continue
-
 
       local SERVICE=$(echo $line | cut -d : -f 1)
       local SERVICE_DESCRIPTION=$(echo $line | cut -d : -f 2)
@@ -329,8 +326,9 @@ touch $DIR_OUT/$SERVICE_GROUP_FILE
 while read line; do
   [ -z "$line" ] && continue
   [ "${line:0:1}" = "#" ] && continue
+  [ "${line:0:5}" = "tmpl_" ] && continue
 
-#  echo $line
+  echo "$(date  +%H:%m:%S) $line"
   MYHOST=$(echo $line | cut -d: -f 1)
   MYGROUPS=$(echo $line | cut -d: -f 2)
   MYGROUPS=$(echo ${MYGROUPS//,/ })
@@ -339,22 +337,40 @@ while read line; do
   MYSERVICES_EXTRA=$(echo $line | cut -d: -f 4)
   MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
 
+  if [ "-f $DIR_NRPE_OUT/$MYGROUPS.cfg" ];then
+    while read line_tmp; do
+      [ -z "$line_tmp" ] && continue
+      [ "${line_tmp:0:1}" = "#" ] && continue
+      MYHOST_XXX=$(echo $line_tmp | cut -d: -f 1)
+      if [ "tmpl_$MYGROUPS" = "$MYHOST_XXX" ]; then
+        MYGROUPS=$(echo $line_tmp | cut -d: -f 2)
+        MYGROUPS=$(echo ${MYGROUPS//,/ })
+        MYSERVICES=$(echo $line_tmp | cut -d: -f 3)
+        MYSERVICES=$(echo ${MYSERVICES//,/ })
+        MYSERVICES_EXTRA=$(echo $line_tmp | cut -d: -f 4)
+        MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
+      fi
+    done < $FILE_CLUSTER_IN
+  fi
+
+  # generate hosts
   hosts_gen $MYHOST
+
+  # generate hostgroups
   for gr in $MYGROUPS;do
     hostsgroup_gen $gr $MYHOST
   done
+
+  # generate services
   for service in $MYSERVICES;do
     services_gen_from_group "$service" $MYHOST
     servicegroup_gen "$service" $MYHOST
   done
-
+  # generate services from extra
   for service in $MYSERVICES_EXTRA;do
     services_gen "$service" $MYHOST
   done
-
 done < $FILE_CLUSTER_IN
-
-
 
 #echo
 #echo "+++++++++++++++++++++++++++++++++++++"
