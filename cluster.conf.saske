@@ -22,6 +22,6 @@ n61-iep-grid.saske.sk:all_nodes:common,common_extra,grid_common,grid_wn:check_di
 ali06-iep-grid.saske.sk:all_nodes:common,common_extra,grid_common:check_raid,check_disk_sdc1,check_lsi_megaraid
 #aliXX-iep-grid.saske.sk:all_nodes:common,common_extra,grid_common:check_raid,check_disk_sdc1,check_3ware
 
-ce-cream-iep-grid.saske.sk:all_nodes:common,common_extra,grid_common,grid_ce_cream:check_raid
+ce-cream-iep-grid.saske.sk:all_nodes:common,common_extra,grid_ce_cream:check_raid
 
 # End
