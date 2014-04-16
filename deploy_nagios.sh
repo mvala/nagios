@@ -361,20 +361,16 @@ while read line; do
     hostsgroup_gen $gr $MYHOST
   done
 
-#  if [ ! -f $DIR_NRPE_OUT/$MYHOST.cfg ];then
-    # generate services
-    for service in $MYSERVICES;do
-      services_gen_from_group "$service" $MYHOST
-      servicegroup_gen "$service" $MYHOST
-    done
-    # generate services from extra
-    for service in $MYSERVICES_EXTRA;do
-      services_gen "$service" $MYHOST
-    done
-#  fi
+  # generate services
+  for service in $MYSERVICES;do
+    services_gen_from_group "$service" $MYHOST
+    servicegroup_gen "$service" $MYHOST
+  done
+  # generate services from extra
+  for service in $MYSERVICES_EXTRA;do
+    services_gen "$service" $MYHOST
+  done
 done < $FILE_CLUSTER_IN
-
-
 
 #echo
 #echo "+++++++++++++++++++++++++++++++++++++"
