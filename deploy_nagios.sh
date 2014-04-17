@@ -269,7 +269,7 @@ for f in $(ls $DIR_NRPE_OUT);do
   MY_PSSH_HOSTS="root@${f//.cfg/} $MY_PSSH_HOSTS"
 done
 echo "Checking ssh to all nrpe servers "
-pssh -H "$MY_PSSH_HOSTS" echo -n
+pssh -O StrictHostKeyChecking=no -H "$MY_PSSH_HOSTS" echo -n
 [ $? -eq 0 ] || exit 11
 echo "Checking ssh to all nrpe servers [OK]"
 
@@ -286,7 +286,7 @@ for f in $(ls $DIR_NRPE_OUT);do
 done
 
 echo "Restarting nrpe on all nrpe hosts ..."
-pssh -H "$MY_PSSH_HOSTS" service nrpe restart
+pssh -O StrictHostKeyChecking=no -H "$MY_PSSH_HOSTS" service nrpe restart
 [ $? -eq 0 ] || exit 12
 echo "Restarting nrpe on all nrpe hosts [OK]"
 
