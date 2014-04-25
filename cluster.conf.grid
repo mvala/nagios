@@ -1,6 +1,76 @@
 # DEPLOY_NAGIOS_SERVER="gridmon-iep-grid.saske.sk:/etc/nagios"
 # DEPLOY_NAGIOS_NRPE_DIR="/etc/nrpe.d"
 
-n54-iep-grid.saske.sk:wn:common:check_disk_sda1
+# WN
+tmpl_wn:all_nodes:common,common_extra,grid_common,grid_wn:check_disk_sda2
+tmpl_wn_eos:all_nodes:common,common_extra,grid_common,grid_wn:check_disk_sda2,check_smartmon_sdb
+
+n1-iep-grid.saske.sk:wn
+n2-iep-grid.saske.sk:wn
+n3-iep-grid.saske.sk:wn
+n4-iep-grid.saske.sk:wn
+n5-iep-grid.saske.sk:wn
+n6-iep-grid.saske.sk:wn
+n7-iep-grid.saske.sk:wn
+n8-iep-grid.saske.sk:wn
+n9-iep-grid.saske.sk:wn
+n10-iep-grid.saske.sk:wn
+n11-iep-grid.saske.sk:wn
+n12-iep-grid.saske.sk:wn
+n13-iep-grid.saske.sk:wn
+#n14-iep-grid.saske.sk:wn
+n15-iep-grid.saske.sk:wn
+n16-iep-grid.saske.sk:wn
+n17-iep-grid.saske.sk:wn
+n18-iep-grid.saske.sk:wn
+n19-iep-grid.saske.sk:wn
+n20-iep-grid.saske.sk:wn
+n21-iep-grid.saske.sk:wn
+n22-iep-grid.saske.sk:wn
+n23-iep-grid.saske.sk:wn
+n24-iep-grid.saske.sk:wn
+n25-iep-grid.saske.sk:wn
+n26-iep-grid.saske.sk:wn
+n27-iep-grid.saske.sk:wn
+n28-iep-grid.saske.sk:wn
+n29-iep-grid.saske.sk:wn
+n30-iep-grid.saske.sk:wn
+n31-iep-grid.saske.sk:wn
+n32-iep-grid.saske.sk:wn
+n33-iep-grid.saske.sk:wn
+n34-iep-grid.saske.sk:wn
+n35-iep-grid.saske.sk:wn
+n36-iep-grid.saske.sk:wn
+n37-iep-grid.saske.sk:wn
+n38-iep-grid.saske.sk:wn
+n39-iep-grid.saske.sk:wn
+n40-iep-grid.saske.sk:wn
+n41-iep-grid.saske.sk:wn
+n42-iep-grid.saske.sk:wn
+n43-iep-grid.saske.sk:wn
+n44-iep-grid.saske.sk:wn
+n45-iep-grid.saske.sk:wn
+n46-iep-grid.saske.sk:wn
+n47-iep-grid.saske.sk:wn
+n48-iep-grid.saske.sk:wn
+n49-iep-grid.saske.sk:wn
+n50-iep-grid.saske.sk:wn
+n51-iep-grid.saske.sk:wn
+n52-iep-grid.saske.sk:wn
+n53-iep-grid.saske.sk:wn
+n54-iep-grid.saske.sk:wn_eos
+n55-iep-grid.saske.sk:wn_eos
+n56-iep-grid.saske.sk:wn_eos
+n57-iep-grid.saske.sk:wn_eos
+n58-iep-grid.saske.sk:wn_eos
+n59-iep-grid.saske.sk:wn_eos
+n60-iep-grid.saske.sk:wn_eos
+n61-iep-grid.saske.sk:wn_eos
+n62-iep-grid.saske.sk:wn
+n63-iep-grid.saske.sk:wn
+n64-iep-grid.saske.sk:wn
+n65-iep-grid.saske.sk:wn
+n66-iep-grid.saske.sk:wn
+n67-iep-grid.saske.sk:wn
 
 # end
