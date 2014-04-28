@@ -73,4 +73,22 @@ n65-iep-grid.saske.sk:wn
 n66-iep-grid.saske.sk:wn
 n67-iep-grid.saske.sk:wn
 
+
+# SE
+tmpl_alise:all_nodes:common,common_extra:check_smartmon_sdc,check_raid,check_temp
+
+ali01-iep-grid.saske.sk:alise
+ali02-iep-grid.saske.sk:alise
+ali03-iep-grid.saske.sk:alise
+ali04-iep-grid.saske.sk:alise
+ali05-iep-grid.saske.sk:alise
+ali06-iep-grid.saske.sk:alise
+
+s1-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sdc,check_smartmon_sdd,check_temp
+s2-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sdc,check_temp
+s3-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sdc,check_smartmon_sdd,check_smartmon_sde,check_temp
+s4-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sda,check_smartmon_sdb,check_temp
+s5-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sdc,check_smartmon_sdf,check_temp
+s6-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sda,check_smartmon_sdb,check_temp
+
 # end
