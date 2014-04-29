@@ -268,11 +268,13 @@ MY_PSSH_HOSTS=""
 for f in $(ls $DIR_NRPE_OUT);do
   MY_PSSH_HOSTS="root@${f//.cfg/} $MY_PSSH_HOSTS"
 done
-echo "Checking ssh to all nrpe servers "
-pssh -O StrictHostKeyChecking=no -H "$MY_PSSH_HOSTS" echo -n
-[ $? -eq 0 ] || exit 11
-echo "Checking ssh to all nrpe servers [OK]"
 
+if [ -n "$MY_PSSH_HOSTS" ];then
+  echo "Checking ssh to all nrpe servers "
+  pssh -O StrictHostKeyChecking=no -H "$MY_PSSH_HOSTS" echo -n
+  [ $? -eq 0 ] || exit 11
+  echo "Checking ssh to all nrpe servers [OK]"
+fi
 
 echo "Copying all config files for nagios server ..."
 echo "scp etc/objects/* root@$DEPLOY_NAGIOS_SERVER/objects/"
@@ -285,11 +287,12 @@ for f in $(ls $DIR_NRPE_OUT);do
   scp $DIR_NRPE_OUT/$f root@${f//.cfg/}:$DEPLOY_NAGIOS_NRPE_DIR/
 done
 
-echo "Restarting nrpe on all nrpe hosts ..."
-pssh -O StrictHostKeyChecking=no -H "$MY_PSSH_HOSTS" service nrpe restart
-[ $? -eq 0 ] || exit 12
-echo "Restarting nrpe on all nrpe hosts [OK]"
-
+if [ -n "$MY_PSSH_HOSTS" ];then
+  echo "Restarting nrpe on all nrpe hosts ..."
+  pssh -O StrictHostKeyChecking=no -H "$MY_PSSH_HOSTS" service nrpe restart
+  [ $? -eq 0 ] || exit 12
+  echo "Restarting nrpe on all nrpe hosts [OK]"
+fi
 }
 
 if [ -n "$1" ];then
