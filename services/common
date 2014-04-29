@@ -8,3 +8,4 @@ check_swap
 # need sudo
 #check_disk_smart_sda
 check_ntpd_status
+check_temp
