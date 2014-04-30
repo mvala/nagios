@@ -328,6 +328,7 @@ touch $DIR_OUT/$SERVICE_GROUP_FILE
 
 #MY_TMP_SERV_GROUP=""
 while read line; do
+  [ "$line" = "# END" ] && break
   [ -z "$line" ] && continue
   [ "${line:0:1}" = "#" ] && continue
   [ "${line:0:5}" = "tmpl_" ] && continue

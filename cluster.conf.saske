@@ -12,27 +12,6 @@ tmpl_eos:all_nodes:common,common_extra:check_disk_sda1
 eos-head-iep-grid.saske.sk:eos
 eos-head2-iep-grid.saske.sk:eos
 
-# WN
-tmpl_wn:all_nodes:common,common_extra,grid_wn:check_disk_sda2
-n54-iep-grid.saske.sk:wn
-n55-iep-grid.saske.sk:wn
-n56-iep-grid.saske.sk:wn
-n58-iep-grid.saske.sk:wn
-n59-iep-grid.saske.sk:wn
-n50-iep-grid.saske.sk:wn
+# END
 
-#n55-iep-grid.saske.sk:all_nodes:common,common_extra,grid_wn:check_disk_sda2
-#n56-iep-grid.saske.sk:all_nodes:common,common_extra,grid_wn:check_disk_sda2
-#n57-iep-grid.saske.sk:all_nodes:common,common_extra,grid_wn:check_disk_sda2
-#n58-iep-grid.saske.sk:all_nodes:common,common_extra,grid_wn:check_disk_sda2
-#n59-iep-grid.saske.sk:all_nodes:common,common_extra,grid_wn:check_disk_sda2
-#n60-iep-grid.saske.sk:all_nodes:common,common_extra,grid_wn:check_disk_sda2
-#n61-iep-grid.saske.sk:all_nodes:common,common_extra,grid_wn:check_disk_sda2
-
-# SE
-ali06-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_disk_sdc1,check_lsi_megaraid
-#aliXX-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_disk_sdc1,check_3ware
-
-ce-cream-iep-grid.saske.sk:all_nodes:common,common_extra,grid_ce_cream:
-
-# End
+Nothing will be read after # END
