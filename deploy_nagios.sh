@@ -9,19 +9,27 @@ DIR_OUT="etc/objects"
 DIR_NRPE_OUT="etc/nrpe"
 SERVICES_IN_DIR="services"
 
+DIR_TMP="/tmp/deploy_nagios"
+
 DOMAIN=".saske.sk"
 HOSTS_FILE="hosts.cfg"
 HOST_GROUP_FILE="hostgroups.cfg"
 SERVICES_FILE="services.cfg"
 SERVICE_GROUP_FILE="servicegroups.cfg"
 
+DEPLOY_ONLY=0
 DEPLOY_NAGIOS_SERVER="wiki.saske.sk:/etc/nagios"
 DEPLOY_NAGIOS_NRPE_DIR="/etc/nrpe.d"
+
+TEMPLATE_TYPE=0
+TEMPLATE_CURRENT_NAME=""
+TEMPLATES=""
 
 function help() {
   echo
   echo "usage:"
-  echo "       $0 cluster.conf"
+  echo "       $0                : full process"
+  echo "       $0 --deploy-only  : deploy only"
   echo
 }
 
@@ -42,11 +50,15 @@ function check() {
 
 function hosts_gen() {
 
+
+  [ $TEMPLATE_TYPE -eq 1 ] && return
   local MYHOST=$1
 
   if [[ $MYHOST != *$DOMAIN* ]];then
-    echo "Error : Host '$MYHOST' doesn't containg '$DOMAIN' !!!"
-    exit 10
+    if [ "${MYHOST:0:5}" != "tmpl_" ];then
+      echo "Error : Host '$MYHOST' doesn't containg '$DOMAIN' !!!"
+      exit 10
+    fi
   fi
   local MYHOST_SHORT="${MYHOST//$DOMAIN/}"
   local MYHOST_IP=$(host $MYHOST | cut -d " " -f 4)
@@ -64,6 +76,9 @@ EOF
 }
 
 function hostsgroup_gen() {
+
+  [ $TEMPLATE_TYPE -eq 1 ] && return
+
   IS_GROUP=$(cat $DIR_OUT/$HOST_GROUP_FILE | grep "hostgroup_name" | grep $1)
   if [ ! $? -eq 0 ];then
 cat >> $DIR_OUT/$HOST_GROUP_FILE <<EOF
@@ -84,6 +99,8 @@ EOF
 }
 
 function services_gen() {
+
+  [ $TEMPLATE_TYPE -eq 2 ] && return
 
   while read line; do
     [ -z "$line" ] && continue
@@ -127,6 +144,8 @@ EOF
 }
 
 function services_gen_from_group() {
+
+  [ $TEMPLATE_TYPE -eq 2 ] && return
 
   if [ ! -f $SERVICES_IN_DIR/$1 ];then
     echo "SERVICE $1 was not found in $SERVICES_IN_DIR/$1 !!!"
@@ -185,6 +204,13 @@ EOF
 
 function servicegroup_gen() {
 
+
+  [ $TEMPLATE_TYPE -eq 2 ] && return
+
+  # this is template -> create variable for servis group
+  #  [ $TEMPLATE_TYPE -eq 2 ] && return
+
+
   MY_SERVICE_GROUP=$1
   MY_HOST=$2
 
@@ -211,20 +237,49 @@ function servicegroup_gen() {
     IS_SERVICE=$(cat $DIR_OUT/$SERVICE_GROUP_FILE | grep "^# $MY_SERVICE_GROUP$")
     if [ ! $? -eq 0 ];then
 
+      local MY_MEMBERS="$2,$SERVICE_DESCRIPTION"
+      if [ $TEMPLATE_TYPE -eq 1 ];then
+        MY_MEMBERS=""
+        MY_TEMPLATE_SERVICE_GROUPS="${TEMPLATE_CURRENT_NAME}_SERVICE_GROUPS"
+        MY_TEMPLATE_SERVICE_GROUPS_VAL="${TEMPLATE_CURRENT_NAME}_${MY_SERVICE_GROUP}_SERVICE_GROUPS_VAL"
+        IS_SG=0
+        for MY_SG_TMP in ${!MY_TEMPLATE_SERVICE_GROUPS};do
+          if [ "$MY_SG_TMP" = "${MY_SERVICE_GROUP}" ];then
+            IS_SG=1
+            break
+          fi
+        done
+        [ $IS_SG -eq 0 ] && export ${TEMPLATE_CURRENT_NAME}_SERVICE_GROUPS="${!MY_TEMPLATE_SERVICE_GROUPS} ${MY_SERVICE_GROUP}"
+        export ${TEMPLATE_CURRENT_NAME}_${MY_SERVICE_GROUP}_SERVICE_GROUPS_VAL="${!MY_TEMPLATE_SERVICE_GROUPS_VAL},<host>,$SERVICE_DESCRIPTION"
+      fi
 cat >> $DIR_OUT/$SERVICE_GROUP_FILE <<EOF
 # $MY_SERVICE_GROUP
 define servicegroup {
         servicegroup_name               $MY_SERVICE_GROUP
         alias                           $MY_SERVICE_GROUP
-        members                         $2,$SERVICE_DESCRIPTION
+        members                         $MY_MEMBERS
         }
 
 EOF
     else
 
-      LINE=$(cat $DIR_OUT/$SERVICE_GROUP_FILE | grep -ni "^# $MY_SERVICE_GROUP$" | cut -d : -f 1)
-      LINE=`expr $LINE + 4`
-      sed -i -e ''$LINE's/$/,'"$2,$SERVICE_DESCRIPTION"'/' $DIR_OUT/$SERVICE_GROUP_FILE
+      if [ $TEMPLATE_TYPE -eq 1 ];then
+        MY_TEMPLATE_SERVICE_GROUPS="${TEMPLATE_CURRENT_NAME}_SERVICE_GROUPS"
+        MY_TEMPLATE_SERVICE_GROUPS_VAL="${TEMPLATE_CURRENT_NAME}_${MY_SERVICE_GROUP}_SERVICE_GROUPS_VAL"
+        IS_SG=0
+        for MY_SG_TMP in ${!MY_TEMPLATE_SERVICE_GROUPS};do
+          if [ "$MY_SG_TMP" = "${MY_SERVICE_GROUP}" ];then
+            IS_SG=1
+            break
+          fi
+        done
+        [ $IS_SG -eq 0 ] && export ${TEMPLATE_CURRENT_NAME}_SERVICE_GROUPS="${!MY_TEMPLATE_SERVICE_GROUPS} ${MY_SERVICE_GROUP}"
+        export ${TEMPLATE_CURRENT_NAME}_${MY_SERVICE_GROUP}_SERVICE_GROUPS_VAL="${!MY_TEMPLATE_SERVICE_GROUPS_VAL},<host>,$SERVICE_DESCRIPTION"
+      else
+        LINE=$(cat $DIR_OUT/$SERVICE_GROUP_FILE | grep -ni "^# $MY_SERVICE_GROUP$" | cut -d : -f 1)
+        LINE=`expr $LINE + 4`
+        sed -i -e ''$LINE's/$/,'"$2,$SERVICE_DESCRIPTION"'/' $DIR_OUT/$SERVICE_GROUP_FILE
+      fi
     fi
 
   done < $SERVICES_IN_DIR/$MY_SERVICE_GROUP
@@ -296,45 +351,10 @@ if [ -n "$MY_PSSH_HOSTS" ];then
 fi
 }
 
-if [ -n "$1" ];then
-  FILE_CLUSTER_IN="$1"
-fi
+function createTemplate() {
 
-
-if [ ! -f "$FILE_CLUSTER_IN" ];then
-  echo
-  echo "Error: file '$FILE_CLUSTER_IN' was not found !!!"
-  help
-  exit 1
-fi
-
-check
-
-[ -d $DIR_OUT ] || mkdir -p $DIR_OUT
-rm -rf $DIR_NRPE_OUT
-[ -d $DIR_NRPE_OUT ] || mkdir -p $DIR_NRPE_OUT
-
-rm -f $DIR_OUT/$HOSTS_FILE
-touch $DIR_OUT/$HOSTS_FILE
-
-rm -f $DIR_OUT/$HOST_GROUP_FILE
-touch $DIR_OUT/$HOST_GROUP_FILE
-
-rm -f $DIR_OUT/$SERVICES_FILE
-touch $DIR_OUT/$SERVICES_FILE
-
-rm -f $DIR_OUT/$SERVICE_GROUP_FILE
-touch $DIR_OUT/$SERVICE_GROUP_FILE
-
-#MY_TMP_SERV_GROUP=""
-while read line; do
-  [ "$line" = "# END" ] && break
-  [ -z "$line" ] && continue
-  [ "${line:0:1}" = "#" ] && continue
-  [ "${line:0:5}" = "tmpl_" ] && continue
-
-  echo "$(date  +%H:%m:%S) $line"
-  MYHOST=$(echo $line | cut -d: -f 1)
+  echo "Doing template $*"
+  MYTMPL=$(echo $line | cut -d: -f 1)
   MYGROUPS=$(echo $line | cut -d: -f 2)
   MYGROUPS=$(echo ${MYGROUPS//,/ })
   MYSERVICES=$(echo $line | cut -d: -f 3)
@@ -342,21 +362,24 @@ while read line; do
   MYSERVICES_EXTRA=$(echo $line | cut -d: -f 4)
   MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
 
-  if [ "-f $DIR_NRPE_OUT/$MYGROUPS.cfg" ];then
-    while read line_tmp; do
-      [ -z "$line_tmp" ] && continue
-      [ "${line_tmp:0:1}" = "#" ] && continue
-      MYHOST_XXX=$(echo $line_tmp | cut -d: -f 1)
-      if [ "tmpl_$MYGROUPS" = "$MYHOST_XXX" ]; then
-        MYGROUPS=$(echo $line_tmp | cut -d: -f 2)
-        MYGROUPS=$(echo ${MYGROUPS//,/ })
-        MYSERVICES=$(echo $line_tmp | cut -d: -f 3)
-        MYSERVICES=$(echo ${MYSERVICES//,/ })
-        MYSERVICES_EXTRA=$(echo $line_tmp | cut -d: -f 4)
-        MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
-      fi
-    done < $FILE_CLUSTER_IN
-  fi
+  [ -d $DIR_TMP/$MYTMPL/hostgroups ] || mkdir -p $DIR_TMP/$MYTMPL/hostgroups
+  for MYGROUP in $MYGROUPS;do
+    touch $DIR_TMP/$MYTMPL/hostgroups/$MYGROUP
+  done
+
+  [ -d $DIR_TMP/$MYTMPL/service_groups ] || mkdir -p $DIR_TMP/$MYTMPL/service_groups
+  for MYSERVICE in $MYSERVICES;do
+    touch $DIR_TMP/$MYTMPL/service_groups/$MYSERVICE
+  done
+
+  [ -d $DIR_TMP/$MYTMPL/services ] || mkdir -p $DIR_TMP/$MYTMPL/services
+  for MYSERVICE_EXTRA in $MYSERVICES_EXTRA;do
+    touch $DIR_TMP/$MYTMPL/services/$MYSERVICE_EXTRA
+  done
+
+}
+
+function addHost() {
 
   # generate hosts
   hosts_gen $MYHOST
@@ -375,26 +398,124 @@ while read line; do
   for service in $MYSERVICES_EXTRA;do
     services_gen "$service" $MYHOST
   done
-done < $FILE_CLUSTER_IN
+}
 
-#echo
-#echo "+++++++++++++++++++++++++++++++++++++"
-#echo "File : $DIR_OUT/$HOSTS_FILE"
-#echo
-#cat $DIR_OUT/$HOSTS_FILE
-#echo
+if [ "$1" = "--deploy-only" ];then
+  DEPLOY_ONLY=1
+fi
 
-#echo "File : $DIR_OUT/$HOST_GROUP_FILE"
-#echo
-#cat $DIR_OUT/$HOST_GROUP_FILE
-#echo
+if [ ! -f "$FILE_CLUSTER_IN" ];then
+  echo
+  echo "Error: file '$FILE_CLUSTER_IN' was not found !!!"
+  help
+  exit 1
+fi
 
-#echo "File : $DIR_OUT/$SERVICES_FILE"
-#echo
-#cat $DIR_OUT/$SERVICES_FILE
-#echo
-#echo "+++++++++++++++++++++++++++++++++++++"
-#echo
+check
+
+if [ $DEPLOY_ONLY -eq 0 ];then
+
+[ -d $DIR_OUT ] || mkdir -p $DIR_OUT
+rm -rf $DIR_NRPE_OUT
+[ -d $DIR_NRPE_OUT ] || mkdir -p $DIR_NRPE_OUT
+
+rm -f $DIR_OUT/$HOSTS_FILE
+touch $DIR_OUT/$HOSTS_FILE
+
+rm -f $DIR_OUT/$HOST_GROUP_FILE
+touch $DIR_OUT/$HOST_GROUP_FILE
+
+rm -f $DIR_OUT/$SERVICES_FILE
+touch $DIR_OUT/$SERVICES_FILE
+
+rm -f $DIR_OUT/$SERVICE_GROUP_FILE
+touch $DIR_OUT/$SERVICE_GROUP_FILE
+
+rm -rf $DIR_TMP
+mkdir -p $DIR_TMP
+
+  #MY_TMP_SERV_GROUP=""
+  while read line; do
+    [ "$line" = "# END" ] && break
+    [ -z "$line" ] && continue
+    [ "${line:0:1}" = "#" ] && continue
+
+    TEMPLATE_TYPE=0
+    TEMPLATE_CURRENT_NAME=""
+    if [ "${line:0:5}" = "tmpl_" ];then
+#      createTemplate $line
+      TEMPLATE_TYPE=1
+
+      export TEMPLATE_NAME="$(echo $line | cut -d: -f 1)"
+      TEMPLATE_CURRENT_NAME="$TEMPLATE_NAME"
+      TEMPLATES="$TEMPLATES $TEMPLATE_NAME"
+      export ${TEMPLATE_NAME}_NAME="$TEMPLATE_NAME"
+      export ${TEMPLATE_NAME}_LINE="$line"
+#      export ${TEMPLATE_NAME}_HOSTS=""
+    fi
+
+    echo "$(date  +%H:%m:%S) $line"
+    MYHOST=$(echo $line | cut -d: -f 1)
+    MYGROUPS=$(echo $line | cut -d: -f 2)
+    MYGROUPS=$(echo ${MYGROUPS//,/ })
+    MYSERVICES=$(echo $line | cut -d: -f 3)
+    MYSERVICES=$(echo ${MYSERVICES//,/ })
+    MYSERVICES_EXTRA=$(echo $line | cut -d: -f 4)
+    MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
+
+
+    MY_TEMPLATE=tmpl_${MYGROUPS}_NAME
+#    echo "$MY_TEMPLATE = ${!MY_TEMPLATE}"
+
+    # our host is using already defined template
+    if [ -n "${!MY_TEMPLATE}" ];then
+      TEMPLATE_TYPE=2
+      TEMPLATE_CURRENT_NAME="tmpl_${MYGROUPS}"
+#      echo "$TEMPLATE_CURRENT_NAME"
+#      exit 1
+      MY_TEMPLATE_HOSTS=tmpl_${MYGROUPS}_HOSTS
+      export tmpl_${MYGROUPS}_HOSTS="${!MY_TEMPLATE_HOSTS} $MYHOST"
+#      echo "tmpl_${MYGROUPS}_HOSTS -> ${!MY_TEMPLATE_HOSTS}"
+
+      MY_TEMPLATE_LINE=tmpl_${MYGROUPS}_LINE
+      MYGROUPS=$(echo ${!MY_TEMPLATE_LINE} | cut -d: -f 2)
+      MYGROUPS=$(echo ${MYGROUPS//,/ })
+    fi
+
+    addHost
+
+  done < $FILE_CLUSTER_IN
+
+  for TMPL in $TEMPLATES;do
+    MY_HOSTS=${TMPL}_HOSTS
+    MY_HOSTS2=""
+    for TMPL_HOST in ${!MY_HOSTS};do
+      cp $DIR_NRPE_OUT/$TMPL.cfg $DIR_NRPE_OUT/$TMPL_HOST.cfg
+      MY_HOSTS2="$MY_HOSTS2,$TMPL_HOST"
+    done
+    MY_HOSTS2=${MY_HOSTS2/,/}
+    sed -i 's/'$TMPL'/'$MY_HOSTS2'/g' $DIR_OUT/$SERVICES_FILE
+    rm $DIR_NRPE_OUT/$TMPL.cfg
+
+    MY_TEMPLATE_SERVICE_GROUPS="${TMPL}_SERVICE_GROUPS"
+    for SG in ${!MY_TEMPLATE_SERVICE_GROUPS};do
+      for TMPL_HOST in ${!MY_HOSTS};do
+        MY_TEMPLATE_SERVICE_GROUPS_VALS="${TMPL}_${SG}_SERVICE_GROUPS_VAL"
+        MY_SERVICE_GROUPS_VALS=${!MY_TEMPLATE_SERVICE_GROUPS_VALS}
+        MY_SERVICE_GROUPS_VALS=${MY_SERVICE_GROUPS_VALS//<host>/$TMPL_HOST}
+        MY_SERVICE_GROUPS_VALS=${MY_SERVICE_GROUPS_VALS/,/}
+        LINE=$(cat $DIR_OUT/$SERVICE_GROUP_FILE | grep -ni "^# $SG$" | cut -d : -f 1)
+        LINE=`expr $LINE + 4`
+        sed -i -e ''$LINE's/$/,'"$MY_SERVICE_GROUPS_VALS"'/' $DIR_OUT/$SERVICE_GROUP_FILE
+      done
+    done
+
+    sed -i 's/members                         ,/members                         /g' $DIR_OUT/$SERVICE_GROUP_FILE
+
+
+  done
+
+fi
 
 deploy
 
