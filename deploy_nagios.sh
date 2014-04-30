@@ -15,13 +15,15 @@ HOST_GROUP_FILE="hostgroups.cfg"
 SERVICES_FILE="services.cfg"
 SERVICE_GROUP_FILE="servicegroups.cfg"
 
+DEPLOY_ONLY=0
 DEPLOY_NAGIOS_SERVER="wiki.saske.sk:/etc/nagios"
 DEPLOY_NAGIOS_NRPE_DIR="/etc/nrpe.d"
 
 function help() {
   echo
   echo "usage:"
-  echo "       $0 cluster.conf"
+  echo "       $0                : full process"
+  echo "       $0 --deploy-only  : deploy only"
   echo
 }
 
@@ -296,10 +298,9 @@ if [ -n "$MY_PSSH_HOSTS" ];then
 fi
 }
 
-if [ -n "$1" ];then
-  FILE_CLUSTER_IN="$1"
+if [ "$1" = "--deploy-only" ];then
+  DEPLOY_ONLY=1
 fi
-
 
 if [ ! -f "$FILE_CLUSTER_IN" ];then
   echo
@@ -326,76 +327,58 @@ touch $DIR_OUT/$SERVICES_FILE
 rm -f $DIR_OUT/$SERVICE_GROUP_FILE
 touch $DIR_OUT/$SERVICE_GROUP_FILE
 
-#MY_TMP_SERV_GROUP=""
-while read line; do
-  [ "$line" = "# END" ] && break
-  [ -z "$line" ] && continue
-  [ "${line:0:1}" = "#" ] && continue
-  [ "${line:0:5}" = "tmpl_" ] && continue
+if [ $DEPLOY_ONLY -eq 0 ];then
+  #MY_TMP_SERV_GROUP=""
+  while read line; do
+    [ "$line" = "# END" ] && break
+    [ -z "$line" ] && continue
+    [ "${line:0:1}" = "#" ] && continue
+    [ "${line:0:5}" = "tmpl_" ] && continue
 
-  echo "$(date  +%H:%m:%S) $line"
-  MYHOST=$(echo $line | cut -d: -f 1)
-  MYGROUPS=$(echo $line | cut -d: -f 2)
-  MYGROUPS=$(echo ${MYGROUPS//,/ })
-  MYSERVICES=$(echo $line | cut -d: -f 3)
-  MYSERVICES=$(echo ${MYSERVICES//,/ })
-  MYSERVICES_EXTRA=$(echo $line | cut -d: -f 4)
-  MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
+    echo "$(date  +%H:%m:%S) $line"
+    MYHOST=$(echo $line | cut -d: -f 1)
+    MYGROUPS=$(echo $line | cut -d: -f 2)
+    MYGROUPS=$(echo ${MYGROUPS//,/ })
+    MYSERVICES=$(echo $line | cut -d: -f 3)
+    MYSERVICES=$(echo ${MYSERVICES//,/ })
+    MYSERVICES_EXTRA=$(echo $line | cut -d: -f 4)
+    MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
 
-  if [ "-f $DIR_NRPE_OUT/$MYGROUPS.cfg" ];then
-    while read line_tmp; do
-      [ -z "$line_tmp" ] && continue
-      [ "${line_tmp:0:1}" = "#" ] && continue
-      MYHOST_XXX=$(echo $line_tmp | cut -d: -f 1)
-      if [ "tmpl_$MYGROUPS" = "$MYHOST_XXX" ]; then
-        MYGROUPS=$(echo $line_tmp | cut -d: -f 2)
-        MYGROUPS=$(echo ${MYGROUPS//,/ })
-        MYSERVICES=$(echo $line_tmp | cut -d: -f 3)
-        MYSERVICES=$(echo ${MYSERVICES//,/ })
-        MYSERVICES_EXTRA=$(echo $line_tmp | cut -d: -f 4)
-        MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
-      fi
-    done < $FILE_CLUSTER_IN
-  fi
+    if [ "-f $DIR_NRPE_OUT/$MYGROUPS.cfg" ];then
+      while read line_tmp; do
+        [ -z "$line_tmp" ] && continue
+        [ "${line_tmp:0:1}" = "#" ] && continue
+        MYHOST_XXX=$(echo $line_tmp | cut -d: -f 1)
+        if [ "tmpl_$MYGROUPS" = "$MYHOST_XXX" ]; then
+          MYGROUPS=$(echo $line_tmp | cut -d: -f 2)
+          MYGROUPS=$(echo ${MYGROUPS//,/ })
+          MYSERVICES=$(echo $line_tmp | cut -d: -f 3)
+          MYSERVICES=$(echo ${MYSERVICES//,/ })
+          MYSERVICES_EXTRA=$(echo $line_tmp | cut -d: -f 4)
+          MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
+        fi
+      done < $FILE_CLUSTER_IN
+    fi
 
-  # generate hosts
-  hosts_gen $MYHOST
+    # generate hosts
+    hosts_gen $MYHOST
 
-  # generate hostgroups
-  for gr in $MYGROUPS;do
-    hostsgroup_gen $gr $MYHOST
-  done
+    # generate hostgroups
+    for gr in $MYGROUPS;do
+      hostsgroup_gen $gr $MYHOST
+    done
 
-  # generate services
-  for service in $MYSERVICES;do
-    services_gen_from_group "$service" $MYHOST
-    servicegroup_gen "$service" $MYHOST
-  done
-  # generate services from extra
-  for service in $MYSERVICES_EXTRA;do
-    services_gen "$service" $MYHOST
-  done
-done < $FILE_CLUSTER_IN
-
-#echo
-#echo "+++++++++++++++++++++++++++++++++++++"
-#echo "File : $DIR_OUT/$HOSTS_FILE"
-#echo
-#cat $DIR_OUT/$HOSTS_FILE
-#echo
-
-#echo "File : $DIR_OUT/$HOST_GROUP_FILE"
-#echo
-#cat $DIR_OUT/$HOST_GROUP_FILE
-#echo
-
-#echo "File : $DIR_OUT/$SERVICES_FILE"
-#echo
-#cat $DIR_OUT/$SERVICES_FILE
-#echo
-#echo "+++++++++++++++++++++++++++++++++++++"
-#echo
-
+    # generate services
+    for service in $MYSERVICES;do
+      services_gen_from_group "$service" $MYHOST
+      servicegroup_gen "$service" $MYHOST
+    done
+    # generate services from extra
+    for service in $MYSERVICES_EXTRA;do
+      services_gen "$service" $MYHOST
+    done
+  done < $FILE_CLUSTER_IN
+fi
 deploy
 
 RET=0
