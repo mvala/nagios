@@ -9,8 +9,6 @@ DIR_OUT="etc/objects"
 DIR_NRPE_OUT="etc/nrpe"
 SERVICES_IN_DIR="services"
 
-DIR_TMP="/tmp/deploy_nagios"
-
 DOMAIN=".saske.sk"
 HOSTS_FILE="hosts.cfg"
 HOST_GROUP_FILE="hostgroups.cfg"
@@ -351,34 +349,6 @@ if [ -n "$MY_PSSH_HOSTS" ];then
 fi
 }
 
-function createTemplate() {
-
-  echo "Doing template $*"
-  MYTMPL=$(echo $line | cut -d: -f 1)
-  MYGROUPS=$(echo $line | cut -d: -f 2)
-  MYGROUPS=$(echo ${MYGROUPS//,/ })
-  MYSERVICES=$(echo $line | cut -d: -f 3)
-  MYSERVICES=$(echo ${MYSERVICES//,/ })
-  MYSERVICES_EXTRA=$(echo $line | cut -d: -f 4)
-  MYSERVICES_EXTRA=$(echo ${MYSERVICES_EXTRA//,/ })
-
-  [ -d $DIR_TMP/$MYTMPL/hostgroups ] || mkdir -p $DIR_TMP/$MYTMPL/hostgroups
-  for MYGROUP in $MYGROUPS;do
-    touch $DIR_TMP/$MYTMPL/hostgroups/$MYGROUP
-  done
-
-  [ -d $DIR_TMP/$MYTMPL/service_groups ] || mkdir -p $DIR_TMP/$MYTMPL/service_groups
-  for MYSERVICE in $MYSERVICES;do
-    touch $DIR_TMP/$MYTMPL/service_groups/$MYSERVICE
-  done
-
-  [ -d $DIR_TMP/$MYTMPL/services ] || mkdir -p $DIR_TMP/$MYTMPL/services
-  for MYSERVICE_EXTRA in $MYSERVICES_EXTRA;do
-    touch $DIR_TMP/$MYTMPL/services/$MYSERVICE_EXTRA
-  done
-
-}
-
 function addHost() {
 
   # generate hosts
@@ -415,24 +385,22 @@ check
 
 if [ $DEPLOY_ONLY -eq 0 ];then
 
-[ -d $DIR_OUT ] || mkdir -p $DIR_OUT
-rm -rf $DIR_NRPE_OUT
-[ -d $DIR_NRPE_OUT ] || mkdir -p $DIR_NRPE_OUT
+  [ -d $DIR_OUT ] || mkdir -p $DIR_OUT
+  rm -rf $DIR_NRPE_OUT
+  [ -d $DIR_NRPE_OUT ] || mkdir -p $DIR_NRPE_OUT
 
-rm -f $DIR_OUT/$HOSTS_FILE
-touch $DIR_OUT/$HOSTS_FILE
+  rm -f $DIR_OUT/$HOSTS_FILE
+  touch $DIR_OUT/$HOSTS_FILE
 
-rm -f $DIR_OUT/$HOST_GROUP_FILE
-touch $DIR_OUT/$HOST_GROUP_FILE
+  rm -f $DIR_OUT/$HOST_GROUP_FILE
+  touch $DIR_OUT/$HOST_GROUP_FILE
 
-rm -f $DIR_OUT/$SERVICES_FILE
-touch $DIR_OUT/$SERVICES_FILE
+  rm -f $DIR_OUT/$SERVICES_FILE
+  touch $DIR_OUT/$SERVICES_FILE
 
-rm -f $DIR_OUT/$SERVICE_GROUP_FILE
-touch $DIR_OUT/$SERVICE_GROUP_FILE
+  rm -f $DIR_OUT/$SERVICE_GROUP_FILE
+  touch $DIR_OUT/$SERVICE_GROUP_FILE
 
-rm -rf $DIR_TMP
-mkdir -p $DIR_TMP
 
   #MY_TMP_SERV_GROUP=""
   while read line; do
@@ -443,15 +411,12 @@ mkdir -p $DIR_TMP
     TEMPLATE_TYPE=0
     TEMPLATE_CURRENT_NAME=""
     if [ "${line:0:5}" = "tmpl_" ];then
-#      createTemplate $line
       TEMPLATE_TYPE=1
-
       export TEMPLATE_NAME="$(echo $line | cut -d: -f 1)"
       TEMPLATE_CURRENT_NAME="$TEMPLATE_NAME"
       TEMPLATES="$TEMPLATES $TEMPLATE_NAME"
       export ${TEMPLATE_NAME}_NAME="$TEMPLATE_NAME"
       export ${TEMPLATE_NAME}_LINE="$line"
-#      export ${TEMPLATE_NAME}_HOSTS=""
     fi
 
     echo "$(date  +%H:%m:%S) $line"
@@ -465,18 +430,13 @@ mkdir -p $DIR_TMP
 
 
     MY_TEMPLATE=tmpl_${MYGROUPS}_NAME
-#    echo "$MY_TEMPLATE = ${!MY_TEMPLATE}"
 
     # our host is using already defined template
     if [ -n "${!MY_TEMPLATE}" ];then
       TEMPLATE_TYPE=2
       TEMPLATE_CURRENT_NAME="tmpl_${MYGROUPS}"
-#      echo "$TEMPLATE_CURRENT_NAME"
-#      exit 1
       MY_TEMPLATE_HOSTS=tmpl_${MYGROUPS}_HOSTS
       export tmpl_${MYGROUPS}_HOSTS="${!MY_TEMPLATE_HOSTS} $MYHOST"
-#      echo "tmpl_${MYGROUPS}_HOSTS -> ${!MY_TEMPLATE_HOSTS}"
-
       MY_TEMPLATE_LINE=tmpl_${MYGROUPS}_LINE
       MYGROUPS=$(echo ${!MY_TEMPLATE_LINE} | cut -d: -f 2)
       MYGROUPS=$(echo ${MYGROUPS//,/ })
@@ -509,10 +469,7 @@ mkdir -p $DIR_TMP
         sed -i -e ''$LINE's/$/,'"$MY_SERVICE_GROUPS_VALS"'/' $DIR_OUT/$SERVICE_GROUP_FILE
       done
     done
-
     sed -i 's/members                         ,/members                         /g' $DIR_OUT/$SERVICE_GROUP_FILE
-
-
   done
 
 fi
