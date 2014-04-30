@@ -14,15 +14,15 @@ glmon-iep-grid.saske.sk:all_nodes:common,common_extra:check_mysqld_status,check_
 se-iep-grid.saske.sk:all_nodes:common,common_extra:check_lcg-CA,check_bdii_status
 
 squid-iep-grid.saske.sk:all_nodes:common,common_extra:
-#perfsonar01-iep-grid.saske.sk:all_nodes:common,common_extra:check_disk_sda2
-#perfsonar02-iep-grid.saske.sk:all_nodes:common,common_extra:check_disk_sda2
+perfsonar01-iep-grid.saske.sk:all_nodes:common,common_extra:
+perfsonar02-iep-grid.saske.sk:all_nodes:common,common_extra:
 virt01-iep-grid.saske.sk:all_nodes:common,common_extra:check_smartmon_sda,check_smartmon_sdb
 virt02-iep-grid.saske.sk:all_nodes:common,common_extra:check_smartmon_sda,check_smartmon_sdb
 virt03-iep-grid.saske.sk:all_nodes:common,common_extra:check_smartmon_sda,check_smartmon_sdb
 virt04-iep-grid.saske.sk:all_nodes:common,common_extra:check_smartmon_sda,check_smartmon_sdb
 
 # switch
-swrmain-iep-grid.saske.sk:all_switch::check_swport01_ls_port01_swr1,check_swport02_ls_port02_swr1,check_swport_bw_port24_gw_eth1
+swrmain-iep-grid.saske.sk:all_switch:switch_swrmain:
 
 # WN
 tmpl_wn:all_nodes:common,common_extra,grid_wn:check_disk_sda2
@@ -114,4 +114,5 @@ s4-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sdc
 s5-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sda,check_smartmon_sdb,check_temp,check_lsi_megaraid
 s6-iep-grid.saske.sk:all_nodes:common,common_extra:check_raid,check_smartmon_sdc,check_smartmon_sdd,check_temp,check_3ware
 
-# end
+# END
+
