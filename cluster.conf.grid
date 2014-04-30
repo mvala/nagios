@@ -24,14 +24,6 @@ virt04-iep-grid.saske.sk:all_nodes:common,common_extra:check_smartmon_sda,check_
 # switch
 swrmain-iep-grid.saske.sk:all_switch::check_swport01_ls_port01_swr1,check_swport02_ls_port02_swr1,check_swport_bw_port24_gw_eth1
 
-define service{
-use                  generic-service
-host_name            swrmain-iep-grid.saske.sk
-servicegroups        check_gridiepsas_switch
-service_description  Port 02 Link Status port2:swr1
-check_command       check_snmp!-C public -o ifOperStatus.2 -r 1 -m RFC1213-MIB
-
-
 # WN
 tmpl_wn:all_nodes:common,common_extra,grid_wn:check_disk_sda2
 tmpl_wn_eos:all_nodes:common,common_extra,grid_wn:check_disk_sda2,check_smartmon_sdb
