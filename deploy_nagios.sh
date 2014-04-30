@@ -256,9 +256,10 @@ echo ""
 echo "DEPLOY_NAGIOS_SERVER=$DEPLOY_NAGIOS_SERVER"
 echo "DEPLOY_NAGIOS_NRPE_DIR=$DEPLOY_NAGIOS_NRPE_DIR"
 echo ""
-echo -n "Do you want to deploy ? (for deploy press [ENTER] or CTRL-C to cancel)"
-read MY_INPUT
-
+if [ "$1" != "-f" ];then
+  echo -n "Do you want to deploy ? (for deploy press [ENTER] or CTRL-C to cancel)"
+  read MY_INPUT
+fi
 # checking if we can connect
 echo -n "Checking ssh to root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1)"
 ssh root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1) echo -n
