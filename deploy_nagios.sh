@@ -46,20 +46,26 @@ function check() {
   check_prog pssh
 }
 
+function ipfor() {
+  ping -c 1 $1 | grep -Eo -m 1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}';
+}
+
 function hosts_gen() {
 
 
   [ $TEMPLATE_TYPE -eq 1 ] && return
   local MYHOST=$1
 
-  if [[ $MYHOST != *$DOMAIN* ]];then
-    if [ "${MYHOST:0:5}" != "tmpl_" ];then
-      echo "Error : Host '$MYHOST' doesn't containg '$DOMAIN' !!!"
-      exit 10
-    fi
-  fi
+#  if [[ $MYHOST != *$DOMAIN* ]];then
+#    if [ "${MYHOST:0:5}" != "tmpl_" ];then
+#      echo "Error : Host '$MYHOST' doesn't containg '$DOMAIN' !!!"
+#      exit 10
+#    fi
+#  fi
   local MYHOST_SHORT="${MYHOST//$DOMAIN/}"
-  local MYHOST_IP=$(host $MYHOST | cut -d " " -f 4)
+#  local MYHOST_IP=$(host $MYHOST | cut -d " " -f 4)
+
+  local MYHOST_IP=$(ipfor $MYHOST)
 
 cat >> $DIR_OUT/$HOSTS_FILE <<EOF
 define host {

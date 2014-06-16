@@ -4,7 +4,7 @@ check_load
 check_uptime
 check_ssh
 check_ping
-check_swap
+#check_swap
 # need sudo
 #check_disk_smart_sda
 check_ntpd_status
