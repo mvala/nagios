@@ -1,6 +1,12 @@
 # DEPLOY_NAGIOS_SERVER="mgmt1:/etc/nagios"
 # DEPLOY_NAGIOS_NRPE_DIR="/etc/nrpe.d"
 
+tmpl_mgmt:all_nodes:common,common_extra:
+mgmt1:mgmt
+
+tmpl_se:all_nodes:common,common_extra:
+stor1:se
+
 tmpl_wk:all_nodes:common,common_extra:
 comp01:wk
 comp02:wk
