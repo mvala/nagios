@@ -1,0 +1,13 @@
+# DEPLOY_NAGIOS_SERVER="hydra.jinr.ru:/etc/nagios"
+# DEPLOY_NAGIOS_NRPE_DIR="/etc/nrpe.d"
+
+tmpl_wk:all_nodes:common,common_extra:check_swap
+blade01:wk
+blade02:wk
+blade03:wk
+blade04:wk
+blade05:wk
+
+# END
+
+Nothing will be read after # END
