@@ -321,7 +321,7 @@ if [ "$1" != "-f" ];then
 fi
 # checking if we can connect
 MY_NAGIOS_SERVER=$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1)
-if [ "$MY_NAGIOS_SERVER" = "$(hostname -f)" ]; then
+if [ "$MY_NAGIOS_SERVER" != "$(hostname -f)" ]; then
     echo -n "Checking ssh to root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1)"
     ssh root@$MY_NAGIOS_SEVER echo -n
     [ $? -eq 0 ] || exit 10
