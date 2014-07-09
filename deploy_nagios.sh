@@ -320,10 +320,13 @@ if [ "$1" != "-f" ];then
   read MY_INPUT
 fi
 # checking if we can connect
-echo -n "Checking ssh to root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1)"
-ssh root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1) echo -n
-[ $? -eq 0 ] || exit 10
-echo " [OK]"
+MY_NAGIOS_SERVER=$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1)
+if [ "$MY_NAGIOS_SERVER" = "$(hostname -f)" ]; then
+    echo -n "Checking ssh to root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1)"
+    ssh root@$MY_NAGIOS_SEVER echo -n
+    [ $? -eq 0 ] || exit 10
+    echo " [OK]"
+fi
 MY_PSSH_HOSTS=""
 for f in $(ls $DIR_NRPE_OUT);do
   MY_PSSH_HOSTS="root@${f//.cfg/} $MY_PSSH_HOSTS"
@@ -337,10 +340,14 @@ if [ -n "$MY_PSSH_HOSTS" ];then
 fi
 
 echo "Copying all config files for nagios server ..."
-echo "scp etc/objects/* root@$DEPLOY_NAGIOS_SERVER/objects/"
-scp etc/objects/* root@$DEPLOY_NAGIOS_SERVER/objects/
-ssh root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1) service nagios restart
-
+if [ "$MY_NAGIOS_SERVER" = "$(hostname -f)" ]; then
+    cp etc/objects/* $(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 2)/objects/
+    service nagios restart
+else
+    echo "scp etc/objects/* root@$DEPLOY_NAGIOS_SERVER/objects/"
+    scp etc/objects/* root@$DEPLOY_NAGIOS_SERVER/objects/
+    ssh root@$(echo $DEPLOY_NAGIOS_SERVER | cut -d : -f 1) service nagios restart
+fi
 echo "Copying nrpe configs for all hosts ..."
 for f in $(ls $DIR_NRPE_OUT);do
   echo "scp $DIR_NRPE_OUT/$f root@${f//.cfg/}:$DEPLOY_NAGIOS_NRPE_DIR/"
